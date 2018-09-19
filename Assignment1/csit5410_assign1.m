@@ -21,9 +21,11 @@ function csit5410_assign1(FILENAME)
 % Read the image.
 Im = im2double(imread(FILENAME));
 % Show the image in a new window.
-imwrite(Im, '01original.png')
-disp('Original image is read and displayed successfully.');
+figure('name', '01original.jpg');
+imshow(Im, 'InitialMagnification', 'fit');
 
+imwrite(Im, '01original.jpg')
+disp('Original image is read and displayed successfully.');
 
 %
 % TASK 2
@@ -33,9 +35,11 @@ T = double(max(max(Im)))*0.2;
 direction = 'all';
 g = myprewittedge(Im,T,direction);
 % Show the image in a new window.
-imwrite(g, '02boundary1.png')
-disp('The corresponding binary edge image is computed and displayed successfully.');
+figure('name', '02binary1.jpg');
+imshow(g, 'InitialMagnification', 'fit');
 
+imwrite(g, '02binary1.jpg')
+disp('The corresponding binary edge image is computed and displayed successfully.');
 
 %
 % TASK 3
@@ -45,7 +49,10 @@ disp('The corresponding binary edge image is computed and displayed successfully
 direction = 'all';
 f = myprewittedge(Im,[],direction);
 % Show the image in a new window.
-imwrite(f, '03boundary2.png')
+figure('name', '03binary2.jpg');
+imshow(f, 'InitialMagnification', 'fit');
+
+imwrite(f, '03binary2.jpg')
 disp('The corresponding binary edge image is computed and displayed successfully.');
 
 % TASK 4
