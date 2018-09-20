@@ -30,7 +30,6 @@
 %
 function g = myprewittedge(Im,T,direction)
 
-% Just for test
 % w = fspecial('gaussian', [5, 5], 1);
 % Im = imfilter(Im, w, 'replicate');
 % [g, t] = edge(Im, 'prewitt', 0.2, 'both');
@@ -41,19 +40,25 @@ g = zeros(m, n);
 
 % Algorithm 1: Automatically determined threshold
 if isempty(T)
-    T = mean(Im(:));
-    previous = T;
-    for i = 1 : 10
-        G1 = (Im >= T) .* Im;
-        G2 = (Im < T) .* Im;
-        m1 = mean(G1(:));
-        m2 = mean(G2(:));
-        T = 0.5 * (m1 + m2);
-        if (0.05 * previous > abs(T - previous))
-            break
-        end
-        previous = T;
-    end
+    % T = double(mean(Im(:)));
+	T = 0.5 * (double(max(max(Im))) - double(min(min(Im))));
+	T
+	previous = T;
+	for i = 1 : 10
+	    indicate1 = (Im >= T);
+		G1 = indicate1 .* Im;
+		num1 = sum(indicate1(:));
+		indicate2 = (Im < T);
+		G2 = (Im < T) .* Im;
+		num2 = sum(indicate2(:));
+		m1 = sum(G1(:)) / num1;
+		m2 = sum(G2(:)) / num2;
+		T = 0.5 * (m1 + m2)
+		if (0.05 * previous > abs(T - previous))
+		    break
+		end
+		previous = T;
+	end
 end
 
 filter1 = [-1 -1 -1; 0 0 0; 1 1 1];
@@ -64,35 +69,35 @@ filter4 = [0 1 1; -1 0 1; -1 -1 0];
 if strcmpi(direction, 'all')
     for i = 2 : (m - 1)
         for j = 2 : (n - 1)
-            curt_sub_region = [Im(i - 1, j - 1) Im(i - 1, j) Im(i - 1, j + 1);
-                               Im(i, j - 1)     Im(i, j)     Im(i, j + 1);
-                               Im(i + 1, j - 1) Im(i + 1, j) Im(i + 1, j + 1)];
+		    curt_sub_region = [Im(i - 1, j - 1) Im(i - 1, j) Im(i - 1, j + 1);
+		                       Im(i, j - 1)     Im(i, j)     Im(i, j + 1);
+							   Im(i + 1, j - 1) Im(i + 1, j) Im(i + 1, j + 1)];
 
-            temp = sum(sum(filter1 .* curt_sub_region));
-            if temp >= T
-                g(i, j) = 1.0;
-                continue
-            end
+	        temp = sum(sum(filter1 .* curt_sub_region));
+		    if temp >= T
+		        g(i, j) = 1.0;
+			    continue
+		    end
 
-            temp = sum(sum(filter2 .* curt_sub_region));
-            if temp >= T
-                g(i, j) = 1.0;
-                continue
-            end
+		    temp = sum(sum(filter2 .* curt_sub_region));
+		    if temp >= T
+		        g(i, j) = 1.0;
+			    continue
+		    end
 
-            temp = sum(sum(filter3 .* curt_sub_region));
-            if temp >= T
-                g(i, j) = 1.0;
-                continue
-            end
+		    temp = sum(sum(filter3 .* curt_sub_region));
+		    if temp >= T
+		        g(i, j) = 1.0;
+			    continue
+		    end
 
-            temp = sum(sum(filter4 .* curt_sub_region));
-            if temp >= T
-                g(i, j) = 1.0;
-                continue
-            end
-        end
-    end
+		    temp = sum(sum(filter4 .* curt_sub_region));
+		    if temp >= T
+		        g(i, j) = 1.0;
+			    continue
+			end
+		end
+	end
 else
     % Choose the filters
     if strcmpi(direction, 'horizontal')
@@ -107,7 +112,6 @@ else
     if strcmpi(direction, 'neg45')
         filter = filter4;
     end
-
 % if strcmpi(direction, 'all')
 %     filter = [-3 -1 1; -3 0 3; -1 1 3];      sum of last four filters
 %     filter = [-1 -1 -1; -1 8 -1; -1 -1 -1];
@@ -115,15 +119,13 @@ else
 
     for i = 2 : (m - 1)
         for j = 2 : (n - 1)
-            temp = sum(sum(filter .* [Im(i - 1, j - 1) Im(i - 1, j) Im(i - 1, j + 1);
-                                      Im(i, j - 1)     Im(i, j)     Im(i, j + 1);
-                                      Im(i + 1, j - 1) Im(i + 1, j) Im(i + 1, j + 1)]));
-            if temp >= T
-                g(i, j) = 1.0;
-            end
-        end
+	        temp = sum(sum(filter .* [Im(i - 1, j - 1) Im(i - 1, j) Im(i - 1, j + 1);
+		                              Im(i, j - 1)     Im(i, j)     Im(i, j + 1);
+								      Im(i + 1, j - 1) Im(i + 1, j) Im(i + 1, j + 1)]));
+		    if temp >= T
+		        g(i, j) = 1.0;
+		    end
+	    end
     end
 end
-
-% Convert to uint8 format
 g = im2uint8(g);
