@@ -21,8 +21,8 @@ function csit5410_assign1(FILENAME)
 % Read the image.
 Im = im2double(imread(FILENAME));
 % Show the image in a new window.
-figure('name', '01original.jpg');
-imshow(Im, 'InitialMagnification', 'fit');
+% figure('name', '01original.jpg');
+% imshow(Im, 'InitialMagnification', 'fit');
 
 imwrite(Im, '01original.jpg')
 disp('Original image is read and displayed successfully.');
@@ -35,8 +35,8 @@ T = double(max(max(Im)))*0.2;
 direction = 'all';
 g = myprewittedge(Im,T,direction);
 % Show the image in a new window.
-figure('name', '02binary1.jpg');
-imshow(g, 'InitialMagnification', 'fit');
+% figure('name', '02binary1.jpg');
+% imshow(g, 'InitialMagnification', 'fit');
 
 imwrite(g, '02binary1.jpg')
 disp('The corresponding binary edge image is computed and displayed successfully.');
@@ -49,8 +49,8 @@ disp('The corresponding binary edge image is computed and displayed successfully
 direction = 'all';
 f = myprewittedge(Im,[],direction);
 % Show the image in a new window.
-figure('name', '03binary2.jpg');
-imshow(f, 'InitialMagnification', 'fit');
+% figure('name', '03binary2.jpg');
+% imshow(f, 'InitialMagnification', 'fit');
 
 imwrite(f, '03binary2.jpg')
 disp('The corresponding binary edge image is computed and displayed successfully.');
@@ -65,17 +65,17 @@ plot([x(1) y(1)], [x(2) y(2)],'LineWidth',2,'Color','blue');
 plot(x(1),x(2),'x','LineWidth',2,'Color','red');
 plot(y(1),y(2),'x','LineWidth',2,'Color','red');
 hold off
-saveas(gcf, '04longestline.png')
+saveas(gcf, '04longestline.jpg');
+
 %
 % TASK 5
 %
 % Find the image which matches image I best.
-I = double(imread('QR-Code.jpg'));
+I = double(imread('QR-Code.png'));
 % 3 candidate images for matching.
-I1 = double(imread('image1.jpg'));
-I2 = double(imread('image2.jpg'));
-I3 = double(imread('image3.jpg'));
+I1 = double(imread('image1.png'));
+I2 = double(imread('image2.png'));
+I3 = double(imread('image3.png'));
 
 n=findBestMatching(I,I1,I2,I3);
 fprintf('The image matches QR-code.jpg best is image%d.jpg\n', n);
-

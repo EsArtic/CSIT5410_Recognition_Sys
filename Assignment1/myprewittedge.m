@@ -41,19 +41,18 @@ g = zeros(m, n);
 % Algorithm 1: Automatically determined threshold
 if isempty(T)
     % T = double(mean(Im(:)));
-    T = 0.5 * (double(max(max(Im))) - double(min(min(Im))));
-    T
+    T = 0.5 * (double(max(max(Im))) + double(min(min(Im))));
     previous = T;
     for i = 1 : 10
-        indicate1 = (Im >= T);
+        indicate1 = (abs(Im) >= T);
         G1 = indicate1 .* Im;
         num1 = sum(indicate1(:));
-        indicate2 = (Im < T);
+        indicate2 = (abs(Im) < T);
         G2 = (Im < T) .* Im;
         num2 = sum(indicate2(:));
         m1 = sum(G1(:)) / num1;
         m2 = sum(G2(:)) / num2;
-        T = 0.5 * (m1 + m2)
+        T = 0.5 * (m1 + m2);
         if (0.05 * previous > abs(T - previous))
             break
         end
@@ -74,25 +73,25 @@ if strcmpi(direction, 'all')
                                Im(i + 1, j - 1) Im(i + 1, j) Im(i + 1, j + 1)];
 
             temp = sum(sum(filter1 .* curt_sub_region));
-            if temp >= T
+            if abs(temp) >= T
                 g(i, j) = 1.0;
                 continue
             end
 
             temp = sum(sum(filter2 .* curt_sub_region));
-            if temp >= T
+            if abs(temp) >= T
                 g(i, j) = 1.0;
                 continue
             end
 
             temp = sum(sum(filter3 .* curt_sub_region));
-            if temp >= T
+            if abs(temp) >= T
                 g(i, j) = 1.0;
                 continue
             end
 
             temp = sum(sum(filter4 .* curt_sub_region));
-            if temp >= T
+            if abs(temp) >= T
                 g(i, j) = 1.0;
                 continue
             end

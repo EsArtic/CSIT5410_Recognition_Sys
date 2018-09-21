@@ -23,3 +23,7 @@ function n=mysiftalignment(I1,I2)
 %   in order to finish this assignment. Just read the introduction part of
 %   the function to get the usage.
 %
+
+matches = match(I1, I2);
+indices = screenmatches(I1,I2,matches,loc1match,des1match,loc2match,des2match);
+
