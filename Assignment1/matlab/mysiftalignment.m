@@ -24,6 +24,14 @@ function n=mysiftalignment(I1,I2)
 %   the function to get the usage.
 %
 
-matches = match(I1, I2);
-indices = screenmatches(I1,I2,matches,loc1match,des1match,loc2match,des2match);
+[des1, loc1] = sift(I1);
+[des2, loc2] = sift(I2);
+matches = match(I1, I2, des1, loc1, des2, loc2);
+des1 = des1([matches(1, :)], :);
+loc1 = loc1([matches(1, :)], :);
+des2 = des2([matches(2, :)], :);
+loc2 = loc2([matches(2, :)], :);
+indices = screenmatches(I1,I2,matches,loc1,des1,loc2,des2);
+
+[m, n] = size(indices);
 

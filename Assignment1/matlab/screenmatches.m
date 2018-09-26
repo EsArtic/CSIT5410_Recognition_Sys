@@ -121,6 +121,8 @@ disp(indices);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure, imshow([I1,I2],[]);
 o = size(I1,2) ;
+size(loc1match)
+size(loc2match)
 line([loc1match(:,2)';loc2match(:,2)'+o], [loc1match(:,1)';loc2match(:,1)']) ;
 for i=1:size(loc1match,1)
 y = loc1match(i,1);
@@ -149,3 +151,5 @@ y = loc2match(indices(i),1);
 x = loc2match(indices(i),2);
 text(x+o,y,sprintf('%d',indices(i)), 'Color', 'r');
 end
+
+%saveas(gcf, '');

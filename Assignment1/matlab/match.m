@@ -1,4 +1,4 @@
-function matches = match(image1, image2)
+function matches = match(image1, image2, des1, loc1, des2, loc2)
 % matches = match(image1, image2)
 %
 % This function reads two images, finds their SIFT features, and
@@ -10,8 +10,8 @@ function matches = match(image1, image2)
 % 
 
 % Find SIFT keypoints for each image
-[des1, loc1] = sift(image1);
-[des2, loc2] = sift(image2);
+% [des1, loc1] = sift(image1);
+% [des2, loc2] = sift(image2);
 matches=[];
 
 % For efficiency in Matlab, it is cheaper to compute dot products between

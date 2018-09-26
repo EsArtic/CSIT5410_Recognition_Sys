@@ -10,10 +10,7 @@ function [bp, ep] = mylineextraction(BW)
 %   You may need the following predefined MATLAB functions: hough,
 %   houghpeaks, houghlines.
 [H, T, R] = hough(BW, 'Theta',-90:0.5:89);
-
-% Peaks = houghpeaks(H, 5);
-Peaks = houghpeaks(H, 5, 'threshold', ceil(0.2 * max(H(:))))
-
+Peaks = houghpeaks(H, 6);
 lines = houghlines(BW, T, R, Peaks);
 
 [m, n] = size(BW);
@@ -28,6 +25,5 @@ for i = 1:length(lines)
         maxLen = currLen;
     end
 end
-
 bp = lines(index).point1;
 ep = lines(index).point2;

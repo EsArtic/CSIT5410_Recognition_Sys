@@ -35,7 +35,7 @@ T = double(max(max(Im)))*0.2;
 direction = 'all';
 g = myprewittedge(Im,T,direction);
 % Show the image in a new window.
-% figure('name', '02binary1.jpg');
+% figure('name', '02binary1.jpg'); 
 % imshow(g, 'InitialMagnification', 'fit');
 
 imwrite(g, '02binary1.jpg')
