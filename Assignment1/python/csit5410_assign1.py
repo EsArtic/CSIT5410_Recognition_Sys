@@ -2,6 +2,7 @@
 
 import cv2
 import numpy as np
+import skimage.transform as st
 
 def im2double(img):
     result = np.zeros(img.shape, np.float64)
@@ -32,6 +33,7 @@ def myprewittedge(Im, T, direction):
     height, width = Im.shape
     g = np.zeros(Im.shape, np.uint8)
 
+    # Algorithm 1: Automatically determined threshold
     if T == None:
         T = 0.5 * (np.max(Im) + np.min(Im))
         previous = T
@@ -41,35 +43,55 @@ def myprewittedge(Im, T, direction):
                 break
             previous = T
 
+    filter0 = None
     filter1 = np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]])
     filter2 = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])
     filter3 = np.array([[-1, -1, 0], [-1, 0, 1], [0, 1, 1]])
     filter4 = np.array([[0, 1, 1], [-1, 0, 1], [-1, -1, 0]])
 
-    for i in range(1, height - 1):
-        for j in range(1, width - 1):
-            curr_sub_region = np.array([[Im[i - 1, j - 1], Im[i - 1, j], Im[i - 1, j + 1]],
-                                        [Im[i, j - 1],     Im[i, j],     Im[i, j + 1]],
-                                        [Im[i + 1, j - 1], Im[i + 1, j], Im[i + 1, j + 1]]])
-            temp = np.sum(filter1 * curr_sub_region)
-            if abs(temp) >= T:
-                g[i, j] = 255
-                continue
+    if direction == 'all':
+        for i in range(1, height - 1):
+            for j in range(1, width - 1):
+                curr_sub_region = np.array([[Im[i - 1, j - 1], Im[i - 1, j], Im[i - 1, j + 1]],
+                                            [Im[i, j - 1],     Im[i, j],     Im[i, j + 1]],
+                                            [Im[i + 1, j - 1], Im[i + 1, j], Im[i + 1, j + 1]]])
+                temp = np.sum(filter1 * curr_sub_region)
+                if abs(temp) >= T:
+                    g[i, j] = 255
+                    continue
 
-            temp = np.sum(filter2 * curr_sub_region)
-            if abs(temp) >= T:
-                g[i, j] = 255
-                continue
+                temp = np.sum(filter2 * curr_sub_region)
+                if abs(temp) >= T:
+                    g[i, j] = 255
+                    continue
             
-            temp = np.sum(filter3 * curr_sub_region)
-            if abs(temp) >= T:
-                g[i, j] = 255
-                continue
+                temp = np.sum(filter3 * curr_sub_region)
+                if abs(temp) >= T:
+                    g[i, j] = 255
+                    continue
 
-            temp = np.sum(filter4 * curr_sub_region)
-            if abs(temp) >= T:
-                g[i, j] = 255
-    
+                temp = np.sum(filter4 * curr_sub_region)
+                if abs(temp) >= T:
+                    g[i, j] = 255
+    else:
+        if direction == 'horizontal':
+            filter0 = filter1
+        elif direction == 'vertical':
+            filter0 = filter2
+        elif direction == 'pos45':
+            filter0 = filter3
+        elif direction == 'neg45':
+            filter0 = filter4
+
+        for i in range(1, height - 1):
+            for j in range(1, width - 1):
+                curr_sub_region = np.array([[Im[i - 1, j - 1], Im[i - 1, j], Im[i - 1, j + 1]],
+                                            [Im[i, j - 1],     Im[i, j],     Im[i, j + 1]],
+                                            [Im[i + 1, j - 1], Im[i + 1, j], Im[i + 1, j + 1]]])
+                temp = np.sum(filter0 * curr_sub_region)
+                if abs(temp) >= T:
+                    g[i, j] = 255
+
     return g
 
 def Task1():
@@ -94,14 +116,18 @@ def Task3(Im):
     # cv2.waitKey(2000)
     return f
 
-def Task4(BW, Im):
-    minLineLength = 200
-    maxLineGap = 15
-    lines = cv2.HoughLinesP(BW, 1, np.pi / 180, 118, minLineLength, maxLineGap)
+def Task4(BW):
+    # minLineLength = 200
+    # maxLineGap = 15
+    # lines = cv2.HoughLinesP(BW, 1, np.pi / 180, 118, minLineLength, maxLineGap)
+    lines = st.probabilistic_hough_line(BW)
 
+    Im = cv2.imread('./fig.tif')
     for line in lines:
-        for x1, y1, x2, y2 in line:
-            cv2.line(Im, (x1, y1), (x2, y2), (0, 0, 255), 5)
+        # for x1, y1, x2, y2 in line:
+        #     cv2.line(Im, (x1, y1), (x2, y2), (255, 0, 0), 5)
+        p0, p1 = line
+        cv2.line(Im, (p0[0], p1[0]), (p0[1], p1[1]), (255, 0, 0), 5)
 
     cv2.imshow('houghline', Im)
     cv2.waitKey(10000)
@@ -114,7 +140,7 @@ def main():
     print('The corresponding binary edge image is computed and dispalyed successfully.')
     f = Task3(Im)
     print('The corresponding binary edge image is computed and displayed successfully.')
-    Task4(f, Im)
+    Task4(f)
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':

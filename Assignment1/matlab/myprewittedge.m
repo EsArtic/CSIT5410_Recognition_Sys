@@ -111,17 +111,13 @@ else
     if strcmpi(direction, 'neg45')
         filter = filter4;
     end
-% if strcmpi(direction, 'all')
-%     filter = [-3 -1 1; -3 0 3; -1 1 3];      sum of last four filters
-%     filter = [-1 -1 -1; -1 8 -1; -1 -1 -1];
-% end
 
     for i = 2 : (m - 1)
         for j = 2 : (n - 1)
             temp = sum(sum(filter .* [Im(i - 1, j - 1) Im(i - 1, j) Im(i - 1, j + 1);
                                       Im(i, j - 1)     Im(i, j)     Im(i, j + 1);
                                       Im(i + 1, j - 1) Im(i + 1, j) Im(i + 1, j + 1)]));
-            if temp >= T
+            if abs(temp) >= T
                 g(i, j) = 1.0;
             end
         end
