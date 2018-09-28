@@ -1,4 +1,4 @@
-function matches = match(image1, image2, des1, loc1, des2, loc2)
+function matches = match(des1, des2)
 % matches = match(image1, image2)
 %
 % This function reads two images, finds their SIFT features, and
@@ -31,9 +31,6 @@ for i = 1 : size(des1,1)
 
    % Check if nearest neighbor has angle less than distRatio times 2nd.
    if (vals(1) < distRatio * vals(2))
-      match(i) = indx(1);
-      matches=[matches [i;indx(1)]];      
-   else
-      match(i) = 0;      
+      matches=[matches [i;indx(1)]];        
    end
 end

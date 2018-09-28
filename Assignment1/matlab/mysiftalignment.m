@@ -1,4 +1,4 @@
-function n=mysiftalignment(I1,I2)
+function n = mysiftalignment(I1, des1, loc1, I2, path)
 %   The function aligns two images by using the SIFT features. 
 %   n=mysiftalignment(I1,I2) takes two images as inputs and returns the 
 %   number of matched paris.
@@ -24,14 +24,14 @@ function n=mysiftalignment(I1,I2)
 %   the function to get the usage.
 %
 
-[des1, loc1] = sift(I1);
 [des2, loc2] = sift(I2);
-matches = match(I1, I2, des1, loc1, des2, loc2);
+
+matches = match(des1, des2);
 des1 = des1([matches(1, :)], :);
 loc1 = loc1([matches(1, :)], :);
 des2 = des2([matches(2, :)], :);
 loc2 = loc2([matches(2, :)], :);
-indices = screenmatches(I1,I2,matches,loc1,des1,loc2,des2);
+
+indices = screenmatches(I1, I2, matches, loc1, des1, loc2, des2, path);
 
 [m, n] = size(indices);
-

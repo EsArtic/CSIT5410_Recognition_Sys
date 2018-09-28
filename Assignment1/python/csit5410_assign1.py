@@ -2,7 +2,6 @@
 
 import cv2
 import numpy as np
-from skimage import io
 
 def im2double(img):
     result = np.zeros(img.shape, np.float64)
@@ -10,24 +9,6 @@ def im2double(img):
     for i in range(height):
         for j in range(width):
             result[i, j] = img[i, j] / 255.
-
-    return result
-
-def get_max(img):
-    result = 0.0
-    for column in img:
-        for intansity in column:
-            if intansity > result:
-                result = intansity
-
-    return result
-
-def get_min(img):
-    result = 1.0
-    for column in img:
-        for intansity in column:
-            if intansity < result:
-                result = intansity
 
     return result
 
@@ -52,7 +33,7 @@ def myprewittedge(Im, T, direction):
     g = np.zeros(Im.shape, np.uint8)
 
     if T == None:
-        T = 0.5 * (get_max(Im) + get_min(Im))
+        T = 0.5 * (np.max(Im) + np.min(Im))
         previous = T
         for i in range(10):
             T = get_mean(Im, T)
@@ -99,25 +80,41 @@ def Task1():
     return Im
 
 def Task2(Im):
-    threshold = get_max(Im) * 0.2
+    threshold = np.max(Im) * 0.2
     g = myprewittedge(Im, threshold, "all")
-    cv2.imshow('./02binary1.jpg', g)
+    # cv2.imshow('./02binary1.jpg', g)
     cv2.imwrite('./02binary1.jpg', g)
-    cv2.waitKey(2000)
+    # cv2.waitKey(2000)
     return g
 
 def Task3(Im):
     f = myprewittedge(Im, None, "all")
-    cv2.imshow('./03binary2.jpg', f)
+    # cv2.imshow('./03binary2.jpg', f)
     cv2.imwrite('./03binary2.jpg', f)
-    cv2.waitKey(2000)
+    # cv2.waitKey(2000)
     return f
+
+def Task4(BW, Im):
+    minLineLength = 200
+    maxLineGap = 15
+    lines = cv2.HoughLinesP(BW, 1, np.pi / 180, 118, minLineLength, maxLineGap)
+
+    for line in lines:
+        for x1, y1, x2, y2 in line:
+            cv2.line(Im, (x1, y1), (x2, y2), (0, 0, 255), 5)
+
+    cv2.imshow('houghline', Im)
+    cv2.waitKey(10000)
 
 def main():
     Im = Task1()
+    print('Original image is read and displayed successfully.')
     Im = im2double(Im)
     g = Task2(Im)
+    print('The corresponding binary edge image is computed and dispalyed successfully.')
     f = Task3(Im)
+    print('The corresponding binary edge image is computed and displayed successfully.')
+    Task4(f, Im)
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':

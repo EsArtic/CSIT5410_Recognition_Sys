@@ -1,4 +1,4 @@
-function indices=screenmatches(I1,I2,matches,loc1match,des1match,loc2match,des2match)
+function indices=screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match, path)
 %   This function screens out incorrect matched keypoints produced by
 %   match(I1,I2) function.
 %
@@ -152,4 +152,4 @@ x = loc2match(indices(i),2);
 text(x+o,y,sprintf('%d',indices(i)), 'Color', 'r');
 end
 
-%saveas(gcf, '');
+saveas(gcf, path);
