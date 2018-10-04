@@ -1,4 +1,4 @@
-function n = mysiftalignment(I1, des1, loc1, I2, path)
+function n=mysiftalignment(I1, des1, loc1, I2, path)
 %   The function aligns two images by using the SIFT features. 
 %   n=mysiftalignment(I1,I2) takes two images as inputs and returns the 
 %   number of matched paris.

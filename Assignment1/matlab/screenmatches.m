@@ -62,8 +62,7 @@ offset = [cos(dTheta) +sin(dTheta); -sin(dTheta) cos(dTheta)]*offset;
 allX(i) = x2 + offset(1);
 allY(i) = y2 + offset(2);
 end
-figure, plot(allScales, allAngs, '.'), xlabel('scale'), ylabel('angle');
-figure, plot(allX, allY, '.'), xlabel('x'), ylabel('y');
+
 % Use a coarse Hough space.
 % Dimensions are [angle, scale, x, y]
 % Define bin centers
@@ -115,30 +114,10 @@ end
 fprintf('Features belonging to highest peak:\n');
 disp(indices); 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Show matches before screening
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-figure, imshow([I1,I2],[]);
-o = size(I1,2) ;
-size(loc1match)
-size(loc2match)
-line([loc1match(:,2)';loc2match(:,2)'+o], [loc1match(:,1)';loc2match(:,1)']) ;
-for i=1:size(loc1match,1)
-y = loc1match(i,1);
-x = loc1match(i,2);
-text(x,y,sprintf('%d',i), 'Color', 'r');
-end
-for i=1:size(loc2match,1)
-y = loc2match(i,1);
-x = loc2match(i,2);
-text(x+o,y,sprintf('%d',i), 'Color', 'r');
-end
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Show matches after screening
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-figure, imshow([I1,I2],[]);
+figure('name', path), imshow([I1,I2],[]);
 o = size(I1,2) ;
 line([loc1match(indices,2)';loc2match(indices,2)'+o],[loc1match(indices,1)';loc2match(indices,1)']) ;
 for i=1:length(indices)

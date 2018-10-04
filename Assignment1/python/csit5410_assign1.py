@@ -303,16 +303,16 @@ def match(des1, des2):
     return matches
 
 def screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match):
-    initial_len = len(matches)
-    allScales = np.zeros(1, initial_len)
-    allAngs = np.zeros(1, initial_len)
-    allX = np.zeros(1, initial_len)
-    allY = np.zeros(1, initial_len)
+    initial_len = len(matches[0])
+    allScales = np.zeros((1, initial_len))
+    allAngs = np.zeros((1, initial_len))
+    allX = np.zeros((1, initial_len))
+    allY = np.zeros((1, initial_len))
     for i in range(initial_len):
-        print('Match %d: image 1 (scale, orient = %f, %f) matches, image2 (scale, orient = %f, %f)\n'
-              % (i, loc1match[i, 2], loc1match[i, 3], loc2match[i, 2], loc2match[i, 3]))
+        print('Match %d: image 1 (scale, orient = %f, %f) matches, image2 (scale, orient = %f, %f)'
+              % (i + 1, loc1match[i, 2], loc1match[i, 3], loc2match[i, 2], loc2match[i, 3]))
         scaleRatio = loc1match[i, 2] / loc2match[i, 2]
-        dTheta = loc1match[i, 3] / loc2match[i, 3]
+        dTheta = loc1match[i, 3] - loc2match[i, 3]
 
         # Force dTheta to be between -pi and +pi
         while dTheta > np.pi:
@@ -325,7 +325,7 @@ def screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match):
 
         # the feature in image 1
         x1 = loc1match[i, 0]
-        y2 = loc1match[i, 1]
+        y1 = loc1match[i, 1]
 
         # the feature in image 2
         x2 = loc2match[i, 0]
@@ -338,7 +338,8 @@ def screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match):
         '''
         offset = np.array([-x1, -y1]).T
         offset = offset / scaleRatio
-        coefficients = np.array([[np.cos(dTheta), abs(np.sin(dTheta))], [-abs(np.sin(dTheta)), cos(dTheta)]])
+        # coefficients = np.array([[np.cos(dTheta), abs(np.sin(dTheta))], [-abs(np.sin(dTheta)), np.cos(dTheta)]])
+        coefficients = np.array([[np.cos(dTheta), np.sin(dTheta)], [-np.sin(dTheta), np.cos(dTheta)]])
         offset = np.dot(coefficients, offset)
 
         allX[0, i] = x2 + offset[0]
@@ -366,14 +367,14 @@ def screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match):
     row, col = I2.shape
     xBin = []
     i = 0
-    while i < col:
+    while i <= col - 1:
         xBin.append(i)
         i += col / 5
     xBin = np.array(xBin)
 
     yBin = []
     i = 0
-    while i < row:
+    while i <= row - 1:
         yBin.append(i)
         i += row / 5
     yBin = np.array(yBin)
@@ -387,6 +388,120 @@ def screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match):
         y = allY[0, i]
 
         # Find bin that is closet to a, s, x, y
+        temp = abs(a - aBin)
+        ia = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[ia]:
+                ia = i
+
+        temp = abs(s - sBin)
+        iS = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[iS]:
+                iS = i
+
+        temp = abs(x - xBin)
+        ix = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[ix]:
+                ix = i
+
+        temp = abs(y - yBin)
+        iy = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[iy]:
+                iy = i
+
+        H[ia, iS, ix, iy] += 1
+
+    # Find all bins with 3 or more features
+    Bin_index = []
+    l1, l2, l3, l4 = H.shape
+    for i in range(l1):
+        for j in range(l2):
+            for k in range(l3):
+                for l in range(l4):
+                    if H[i, j, k, l] >= 3:
+                        Bin_index.append((i, j, k, l))
+
+    print('Peaks in the Hough array:')
+    for i in range(len(Bin_index)):
+        print('%d: %d points, (a, s, x, y) = %f, %f, %f, %f'
+              % (i + 1, H[Bin_index[i][0], Bin_index[i][1], Bin_index[i][2], Bin_index[i][3]],
+                 aBin[Bin_index[i][0]], sBin[Bin_index[i][1]],
+                 xBin[Bin_index[i][2]], yBin[Bin_index[i][3]]))
+
+    # Get the features corresponding to the largest bin
+    nFeatures = np.max(H)
+    print('Largest bin contains %d features' % nFeatures)
+    Bin_index = []
+    for i in range(l1):
+        for j in range(l2):
+            for k in range(l3):
+                for l in range(l4):
+                    if H[i, j, k, l] == nFeatures:
+                        Bin_index.append((i, j, k, l))
+
+    indices = []
+    for idx in range(initial_len):
+        a = allAngs[0, idx]
+        s = allScales[0, idx]
+        x = allX[0, idx]
+        y = allY[0, idx]
+
+        # Find bin that is closest to a, s, x, y
+        temp = abs(a - aBin)
+        ia = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[ia]:
+                ia = i
+
+        temp = abs(s - sBin)
+        iS = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[iS]:
+                iS = i
+
+        temp = abs(x - xBin)
+        ix = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[ix]:
+                ix = i
+
+        temp = abs(y - yBin)
+        iy = 0
+        for i in range(len(temp)):
+            if temp[i] < temp[iy]:
+                iy = i
+
+        if ia == Bin_index[0][0] and iS == Bin_index[0][1] and ix == Bin_index[0][2] and iy == Bin_index[0][3]:
+            indices.append(idx)
+
+    print('Features belonging to highest peak:')
+    print(indices)
+    return indices
+
+def drawMatches(I1, I2, loc1, loc2, indices, path):
+    h1, w1 = I1.shape
+    h2, w2 = I2.shape
+
+    I1 = cv2.imread(ROOT + 'QR-Code.png')
+    I2 = cv2.imread(ROOT + 'image1.png')
+
+    matches_img = np.zeros((h1, w1 + w2, 3), np.uint8)
+    matches_img[: h1, : w1] = I1
+    matches_img[: h2, w1 : w1 + w2] = I2
+
+    for idx in indices:
+        (x1, y1) = (int(loc1[idx][1]), int(loc1[idx][0]))
+        (x2, y2) = (int(loc2[idx][1]) + w1, int(loc2[idx][0]))
+        cv2.line(matches_img, (x1, y1), (x2, y2), (255, 0, 0))
+        cv2.putText(matches_img, str(idx + 1), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
+        cv2.putText(matches_img, str(idx + 1), (x2, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
+
+    cv2.imwrite(path, matches_img)
+    # cv2.imshow('path', matches_img)
+    # cv2.waitKey(10000)
 
 def mysiftalignment(I1, feature1, I2, feature2, out_path):
     des1, loc1 = feature1
@@ -394,22 +509,34 @@ def mysiftalignment(I1, feature1, I2, feature2, out_path):
 
     matches = match(des1, des2)
     print('%d matches points.' % len(matches))
-    return len(matches)
+
+    matches = np.array(matches).T
+    des1_match = des1[matches[0, :], :]
+    loc1_match = loc1[matches[0, :], :]
+    des2_match = des2[matches[1, :], :]
+    loc2_match = loc2[matches[1, :], :]
+
+    indices = screenmatches(I1, I2, matches, loc1_match, des1_match, loc2_match, des2_match)
+    print('%d indices point.' % len(indices))
+    indices = np.array(indices)
+    matches = matches[:, indices]
+    drawMatches(I1, I2, loc1_match, loc2_match, indices, out_path)
+    return len(indices)
 
 def findBestMatching(I, I1, I2, I3):
     num = np.zeros((1, 3))
-    output1 = './05QR_img1.png'
-    output2 = './06QR_img2.png'
-    output3 = './07QR_img3.png'
+    output1 = '05QR_img1.png'
+    output2 = '06QR_img2.png'
+    output3 = '07QR_img3.png'
 
     des0, loc0 = sift(I)
     des1, loc1 = sift(I1)
-    des2, loc2 = sift(I2)
-    des3, loc3 = sift(I3)
+    # des2, loc2 = sift(I2)
+    # des3, loc3 = sift(I3)
 
     num[0, 0] = mysiftalignment(I, [des0, loc0], I1, [des1, loc1], output1)
-    num[0, 1] = mysiftalignment(I, [des0, loc0], I2, [des2, loc2], output2)
-    num[0, 2] = mysiftalignment(I, [des0, loc0], I3, [des3, loc3], output3)
+    # num[0, 1] = mysiftalignment(I, [des0, loc0], I2, [des2, loc2], output2)
+    # num[0, 2] = mysiftalignment(I, [des0, loc0], I3, [des3, loc3], output3)
 
     index = 0
     for i in range(3):

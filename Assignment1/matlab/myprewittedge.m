@@ -30,10 +30,6 @@
 %
 function g = myprewittedge(Im,T,direction)
 
-% w = fspecial('gaussian', [5, 5], 1);
-% Im = imfilter(Im, w, 'replicate');
-% [g, t] = edge(Im, 'prewitt', 0.2, 'both');
-
 % Initialize the binary image p
 [m, n] = size(Im);
 g = zeros(m, n);
@@ -117,7 +113,7 @@ else
             temp = sum(sum(filter .* [Im(i - 1, j - 1) Im(i - 1, j) Im(i - 1, j + 1);
                                       Im(i, j - 1)     Im(i, j)     Im(i, j + 1);
                                       Im(i + 1, j - 1) Im(i + 1, j) Im(i + 1, j + 1)]));
-            if abs(temp) >= T
+            if temp >= T
                 g(i, j) = 1.0;
             end
         end
