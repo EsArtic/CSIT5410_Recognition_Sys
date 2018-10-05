@@ -9,15 +9,20 @@ import numpy as np
 import skimage.transform as st
 
 ROOT = '../matlab/'
+OUT_PATH = './'
+
+def display(title, img):
+    cv2.imshow(title, img)
+    cv2.waitKey(1500)
 
 def im2double(img):
-    result = np.zeros(img.shape, np.float64)
-    height, width = result.shape
+    ret = np.zeros(img.shape, np.float64)
+    height, width = ret.shape
     for i in range(height):
         for j in range(width):
-            result[i, j] = img[i, j] / 255.
+            ret[i, j] = img[i, j] / 255.
 
-    return result
+    return ret
 
 def get_mean(img, T):
     sum_larger = 0
@@ -33,9 +38,22 @@ def get_mean(img, T):
                 sum_smaller += intansity
                 count_smaller += 1
 
-    return 0.5 * ((sum_larger + 0.0) / count_larger + (sum_smaller + 0.0) / count_smaller)
+    return 0.5 * (float(sum_larger) / count_larger + float(sum_smaller) / count_smaller)
 
-def myprewittedge(Im, T, direction):
+def myprewittedge(Im, T = None, direction = 'all'):
+    '''
+        Compute the binary edge image for the image Im.
+        Args:
+            Im: An intensity gray scale image.
+            T: Threshold for generating the binary output image
+            if T is not specified, automatic computed threshold will be provided.
+            direction: A string for specifying whether to look for
+            'horizontal' edges, 'vertical' edges, positive 45 degree 'pos45'
+            edgs, negative 45 degree 'neg45' edges or 'all' edges.
+        Returns:
+            g: A binary image of the same size as Im, with 1's (255) where the
+            function finds edges in Im and 0's eleswhere.
+    '''
     height, width = Im.shape
     g = np.zeros(Im.shape, np.uint8)
 
@@ -100,29 +118,7 @@ def myprewittedge(Im, T, direction):
 
     return g
 
-def Task1():
-    Im = cv2.imread(ROOT + 'fig.tif', cv2.IMREAD_UNCHANGED)
-    # cv2.imshow('./01original.jpg', Im)
-    cv2.imwrite('./01original.jpg', Im)
-    # cv2.waitKey(2000)
-    return Im
-
-def Task2(Im):
-    threshold = np.max(Im) * 0.2
-    g = myprewittedge(Im, threshold, "all")
-    # cv2.imshow('./02binary1.jpg', g)
-    cv2.imwrite('./02binary1.jpg', g)
-    # cv2.waitKey(2000)
-    return g
-
-def Task3(Im):
-    f = myprewittedge(Im, None, "all")
-    # cv2.imshow('./03binary2.jpg', f)
-    cv2.imwrite('./03binary2.jpg', f)
-    # cv2.waitKey(2000)
-    return f
-
-def get_top_peaks(peaks, num):
+def get_top_n_peaks(peaks, num):
     result = []
     for i in range(min(num, len(peaks[0]))):
         result.append((peaks[0][i], peaks[1][i], peaks[2][i]))
@@ -135,21 +131,35 @@ def get_correspond_int(f):
     else:
         return int(f)
 
-def find_lines(BW, peaks):
+def search_for_lines(BW, peaks):
+    '''
+        Find lines in the binary edge image with the peaks computed by
+        Hough line transform.
+        Args:
+            BW: A binary edge image.
+            peaks: Peaks founded by Hough line transform in (hit_numbers,
+            theta, distance) form.
+        Returns:
+            lines: A list containing the start point and end point for the
+            founded lines.
+    '''
     [row, col] = BW.shape
     lines = []
 
-    for intancity, angle, dist in peaks:
-        min_x = 0
-        min_y = 0
-
+    for hits, angle, dist in peaks:
+        dist = abs(dist)
         x0 = dist / np.cos(angle)
         b = dist / np.sin(angle)
         k = -1 * (b / x0)
         max_x = min(col - 1, get_correspond_int(x0))
         max_y = min(row - 1, get_correspond_int(b))
-        min_x = get_correspond_int((max_y - b) / k)
-        min_y = get_correspond_int(k * max_x + b)
+        min_x = max(0, get_correspond_int((max_y - b) / k))
+        min_y = max(0, get_correspond_int(k * max_x + b))
+
+        print('Current range:')
+        print('[min_x, max_x] = [%d, %d]' % (min_x, max_x))
+        print('[min_y, max_y] = [%d, %d]' % (min_y, max_y))
+        print()
 
         if (max_y - min_y) > (max_x - min_x):
             start_point = (min_y, max_x)
@@ -201,36 +211,48 @@ def find_lines(BW, peaks):
 
     return lines
 
-def Task4(BW):
+def mylineextraction(BW):
+    '''
+        Extracts the longest line segment from the given binary image.
+        Args:
+            BW: A binary edge image.
+        Returns:
+            [sp, ep] = start point and end point of the longest line founded.
+    '''
     H, theta, d = st.hough_line(BW)
     peaks = st.hough_line_peaks(H, theta, d)
-    peaks = get_top_peaks(peaks, 5)
-    print(peaks)
-    lines = find_lines(BW, peaks)
+    filtered_peaks = get_top_n_peaks(peaks, 5)
 
-    Im = cv2.imread(ROOT + 'fig.tif')
+    print('Top %d peaks are:')
+    for item in filtered_peaks:
+        print('Hits: %d, theta: %f, distance: %f' % (item[0], item[1], item[2]))
+
+    lines = search_for_lines(BW, filtered_peaks)
 
     max_sp = ()
     max_ep = ()
     max_length = 0
-    for sp, ep in lines:
+    print('Lines founded:')
+    for i, line in enumerate(lines):
+        sp, ep = line
         length = ((sp[0] - ep[0]) ** 2) * ((sp[1] - ep[1]) ** 2)
-        print(sp, ep, length)
+
+        print('start_point: %s, end_point: %s, length: %f' % (sp, ep, math.sqrt(length)))
+
         if length > max_length:
             max_sp = sp
             max_ep = ep
             max_length = length
 
-    print(max_sp, max_ep)
-    cv2.circle(Im, (max_sp[1], max_sp[0]), 4, (0, 0, 255), 2)
-    cv2.circle(Im, (max_ep[1], max_ep[0]), 4, (0, 0, 255), 2)
-    cv2.line(Im, (max_sp[1], max_sp[0]), (max_ep[1], max_ep[0]), (255, 0, 0), 2)
-    cv2.imwrite('./04longestline.jpg', Im)
-    # cv2.imshow('houghline', Im)
-    # cv2.waitKey(10000)
+    print('\nThe longest one:')
+    print('start_point: %s, end_point: %s' % (max_sp, max_ep))
+
+    return max_sp, max_ep
 
 def sift(image):
-
+    '''
+        Python version for the given sift.m function
+    '''
     cv2.imwrite('tmp.pgm', image)
 
     command = ''
@@ -270,6 +292,14 @@ def sift(image):
     return descriptors, locs
 
 def normalize(des):
+    '''
+        Noramlize the given SIFT descriptor by the formula:
+        des[i] = des[i] / sqrt(des[0]^2 + des[1]^2 + ... + des[n]^2)
+        Args:
+            des: The initial SIFT descriptor
+        Returns:
+            ret: The normalized SIFT descriptor
+    '''
     ret = np.zeros(des.shape)
     num, length = des.shape
     for i in range(num):
@@ -284,6 +314,9 @@ def normalize(des):
     return ret
 
 def match(des1, des2):
+    '''
+       Python version for the given match.m function
+    '''
     des1 = normalize(des1)
     des2 = normalize(des2)
     matches = []
@@ -303,6 +336,9 @@ def match(des1, des2):
     return matches
 
 def screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match):
+    '''
+        Python version for the given screenmatches.m function
+    '''
     initial_len = len(matches[0])
     allScales = np.zeros((1, initial_len))
     allAngs = np.zeros((1, initial_len))
@@ -481,34 +517,42 @@ def screenmatches(I1, I2, matches, loc1match, des1match, loc2match, des2match):
     print(indices)
     return indices
 
-def drawMatches(I1, I2, loc1, loc2, indices, path):
-    h1, w1 = I1.shape
-    h2, w2 = I2.shape
+def draw_matches(loc1, loc2, indices, path, QR, origin):
+    I1 = cv2.imread(ROOT + QR)
+    I2 = cv2.imread(ROOT + origin)
 
-    I1 = cv2.imread(ROOT + 'QR-Code.png')
-    I2 = cv2.imread(ROOT + 'image1.png')
-
+    h1, w1, temp = I1.shape
+    h2, w2, temp = I2.shape
     matches_img = np.zeros((h1, w1 + w2, 3), np.uint8)
     matches_img[: h1, : w1] = I1
     matches_img[: h2, w1 : w1 + w2] = I2
 
     for idx in indices:
-        (x1, y1) = (int(loc1[idx][1]), int(loc1[idx][0]))
-        (x2, y2) = (int(loc2[idx][1]) + w1, int(loc2[idx][0]))
+        (x1, y1) = (get_correspond_int(loc1[idx][1]), get_correspond_int(loc1[idx][0]))
+        (x2, y2) = (get_correspond_int(loc2[idx][1]) + w1, get_correspond_int(loc2[idx][0]))
         cv2.line(matches_img, (x1, y1), (x2, y2), (255, 0, 0))
         cv2.putText(matches_img, str(idx + 1), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
         cv2.putText(matches_img, str(idx + 1), (x2, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255))
 
+    # display(path, matches_img)
     cv2.imwrite(path, matches_img)
-    # cv2.imshow('path', matches_img)
-    # cv2.waitKey(10000)
 
-def mysiftalignment(I1, feature1, I2, feature2, out_path):
+def mysiftalignment(I1, feature1, I2, feature2, out_path, QR, origin):
+    '''
+        The function aligns two images by using the SIFT features.
+        Args:
+            I1: The first image to be matched.
+            feature1: Features of I1 extracted by SIFT.
+            I2: The second image to be matched.
+            feature2: Features of I2 extracted by SIFT.
+            [out_path, QR, origin]: path for display and storage.
+        Returns:
+            len(indices): The number of matches pairs.
+    '''
     des1, loc1 = feature1
     des2, loc2 = feature2
 
     matches = match(des1, des2)
-    print('%d matches points.' % len(matches))
 
     matches = np.array(matches).T
     des1_match = des1[matches[0, :], :]
@@ -517,26 +561,30 @@ def mysiftalignment(I1, feature1, I2, feature2, out_path):
     loc2_match = loc2[matches[1, :], :]
 
     indices = screenmatches(I1, I2, matches, loc1_match, des1_match, loc2_match, des2_match)
-    print('%d indices point.' % len(indices))
+
     indices = np.array(indices)
-    matches = matches[:, indices]
-    drawMatches(I1, I2, loc1_match, loc2_match, indices, out_path)
+    draw_matches(loc1_match, loc2_match, indices, out_path, QR, origin)
+
     return len(indices)
 
 def findBestMatching(I, I1, I2, I3):
     num = np.zeros((1, 3))
-    output1 = '05QR_img1.png'
-    output2 = '06QR_img2.png'
-    output3 = '07QR_img3.png'
+    source_QR = 'QR-Code.png'
+    source_file1 = 'image1.png'
+    source_file2 = 'image2.png'
+    source_file3 = 'image3.png'
+    output_file1 = '05QR_img1.png'
+    output_file2 = '06QR_img2.png'
+    output_file3 = '07QR_img3.png'
 
     des0, loc0 = sift(I)
     des1, loc1 = sift(I1)
-    # des2, loc2 = sift(I2)
-    # des3, loc3 = sift(I3)
+    des2, loc2 = sift(I2)
+    des3, loc3 = sift(I3)
 
-    num[0, 0] = mysiftalignment(I, [des0, loc0], I1, [des1, loc1], output1)
-    # num[0, 1] = mysiftalignment(I, [des0, loc0], I2, [des2, loc2], output2)
-    # num[0, 2] = mysiftalignment(I, [des0, loc0], I3, [des3, loc3], output3)
+    num[0, 0] = mysiftalignment(I1, [des0, loc0], I2, [des1, loc1], output_file1, source_QR, source_file1)
+    num[0, 1] = mysiftalignment(I1, [des0, loc0], I2, [des2, loc2], output_file2, source_QR, source_file2)
+    num[0, 2] = mysiftalignment(I1, [des0, loc0], I2, [des3, loc3], output_file3, source_QR, source_file3)
 
     index = 0
     for i in range(3):
@@ -545,7 +593,76 @@ def findBestMatching(I, I1, I2, I3):
 
     return index + 1
 
+def Task1(FILENAME):
+    '''
+        Task1
+        Read an image specified by FILENEMA and save it as
+        '01original.jpg' in the current directory.
+    '''
+    output_file = '01original.jpg'
+
+    Im = cv2.imread(ROOT + FILENAME, cv2.IMREAD_UNCHANGED)
+    # display(output_file, Im)
+    cv2.imwrite(OUT_PATH + output_file, Im)
+    return Im
+
+def Task2(Im):
+    '''
+        Task2
+        Compute the corresponding binary edge image for the original image
+        and save it as '02binary.jpg' in the current directory.
+        Using Prewitt operator and given threshold T = (max intensity) * 0.2.
+    '''
+    output_file = '02binary1.jpg'
+
+    threshold = np.max(Im) * 0.2
+    g = myprewittedge(Im, threshold, "all")
+    # display(output_file, g)
+    cv2.imwrite(OUT_PATH + output_file, g)
+    return g
+
+def Task3(Im):
+    '''
+        Task3
+        Compute the corresponding binary edge image for the original image
+        and save it as '03binary.jpg' in the current directory.
+        Using Prewitt operator and automatic computed threshold.
+    '''
+    output_file = '03binary2.jpg'
+
+    f = myprewittedge(Im)
+    # display(output_file, f)
+    cv2.imwrite(OUT_PATH + output_file, f)
+    return f
+
+def Task4(f, FILENAME):
+    '''
+        Task4
+        Find the longest segment extraction in the binary edge image
+        generated by task3. Then, draw the line on the original image
+        and save it as '04longestline.jpg' in the current directoy.
+        Using skimage.transform package to perform Hough transform.
+    '''
+    output_file = '04longestline.jpg'
+
+    max_sp, max_ep = mylineextraction(f)
+
+    Im = cv2.imread(ROOT + FILENAME)
+
+    cv2.circle(Im, (max_sp[1], max_sp[0]), 4, (0, 0, 255), 2)
+    cv2.circle(Im, (max_ep[1], max_ep[0]), 4, (0, 0, 255), 2)
+    cv2.line(Im, (max_sp[1], max_sp[0]), (max_ep[1], max_ep[0]), (255, 0, 0), 2)
+    # display(output_file, Im)
+    cv2.imwrite(OUT_PATH + output_file, Im)
+
 def Task5():
+    '''
+        Task5(Image alignment using SIFT)
+        For the three given images ('image1.png', 'image2.png', 'image3.png'), using SIFT
+        to find out the one that matches the QR code image ('QR-Code.png') best. Then draw
+        the matchings between the images and QR code image and save them as '05QR_img1.png',
+        '06QR_img2.png', '07QR_img3.png' respectively.
+    '''
     I = cv2.imread(ROOT + 'QR-Code.png', cv2.IMREAD_UNCHANGED)
     I1 = cv2.imread(ROOT + 'image1.png', cv2.IMREAD_UNCHANGED)
     I2 = cv2.imread(ROOT + 'image2.png', cv2.IMREAD_UNCHANGED)
@@ -555,15 +672,21 @@ def Task5():
     print('The image matches QR-code.jpg best is image %d.jpg' % n)
 
 def main():
-    # Im = Task1()
-    # print('Original image is read and displayed successfully.')
-    # Im = im2double(Im)
-    # g = Task2(Im)
-    # print('The corresponding binary edge image is computed and dispalyed successfully.')
-    # f = Task3(Im)
-    # print('The corresponding binary edge image is computed and displayed successfully.')
-    # f = cv2.imread('./03binary2.jpg', cv2.IMREAD_UNCHANGED)
-    # Task4(f)
+    FILENAME = 'fig.tif'
+    Im = Task1(FILENAME)
+    print('Original image is read and displayed successfully.')
+
+    Im = im2double(Im)
+
+    g = Task2(Im)
+    print('The corresponding binary edge image is computed and dispalyed successfully.')
+    
+    f = Task3(Im)
+    print('The corresponding binary edge image is computed and displayed successfully.')
+    
+    # f = cv2.imread('03binary2.jpg', cv2.IMREAD_UNCHANGED)
+    Task4(f, FILENAME)
+
     Task5()
     cv2.destroyAllWindows()
 
