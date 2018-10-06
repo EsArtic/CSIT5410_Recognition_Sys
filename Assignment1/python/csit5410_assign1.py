@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import sys
 import math
 import platform
 
@@ -223,7 +224,7 @@ def mylineextraction(BW):
     peaks = st.hough_line_peaks(H, theta, d)
     filtered_peaks = get_top_n_peaks(peaks, 5)
 
-    print('Top %d peaks are:')
+    print('Top %d peaks are:' % (len(filtered_peaks)))
     for item in filtered_peaks:
         print('Hits: %d, theta: %f, distance: %f' % (item[0], item[1], item[2]))
 
@@ -673,6 +674,10 @@ def Task5():
 
 def main():
     FILENAME = 'fig.tif'
+
+    if len(sys.argv) == 2:
+        FILENAME = sys.argv[1]
+
     Im = Task1(FILENAME)
     print('Original image is read and displayed successfully.')
 
