@@ -212,6 +212,89 @@ def search_for_lines(BW, peaks):
 
     return lines
 
+def search_for_lines_interpolation(BW, peaks):
+    '''
+        Find lines in the binary edge image with the peaks computed by
+        Hough line transform. Using bilinear interpolation to evaluate
+        intansity on non-pixel postions.
+        Args:
+            BW: A binary edge image.
+            peaks: Peaks founded by Hough line transform in (hit_numbers,
+            theta, distance) form.
+        Returns:
+            lines: A list containing the start point and end point for the
+            founded lines.
+    '''
+    [row, col] = BW.shape
+    lines = []
+
+    for hits, angle, dist in peaks:
+        dist = abs(dist)
+        x0 = dist / np.cos(angle)
+        b = dist / np.sin(angle)
+        k = -1 * (b / x0)
+        max_x = min(col - 1, get_correspond_int(x0))
+        max_y = min(row - 1, get_correspond_int(b))
+        min_x = max(0, get_correspond_int((max_y - b) / k))
+        min_y = max(0, get_correspond_int(k * max_x + b))
+
+        print('Current range:')
+        print('[min_x, max_x] = [%d, %d]' % (min_x, max_x))
+        print('[min_y, max_y] = [%d, %d]' % (min_y, max_y))
+        print()
+
+        if (max_y - min_y) > (max_x - min_x):
+            start_point = (min_y, max_x)
+            end_point = (min_y, max_x)
+            start = False
+            skip = 0
+            for i in range(min_y, max_y + 1):
+                xi = (i - b) / k
+                q1 = (i, int(xi) - 1)
+                q2 = (i, int(xi) + 2)
+                intansity = (q2[1] - xi) * BW[q1[0], q1[1]] + (xi - q1[1]) * BW[q2[0], q2[1]]
+                edge = False
+                if intansity >= 128.:
+                    edge = True
+                if edge:
+                    skip = 0
+                    if not start:
+                        start = True
+                        start_point = (i, get_correspond_int(xi))
+                else:
+                    skip += 1
+                    if start:
+                        if skip > 30:
+                            start = False
+                            end_point = (i - 1, get_correspond_int((i - 1 - b) / k))
+                            lines.append((start_point, end_point))
+        else:
+            start_point = (min_y, max_x)
+            end_point = (min_y, max_x)
+            start = False
+            skip = 0
+            for i in range(min_x, max_x + 1):
+                yi = k * i + b
+                q1 = (int(yi) - 1, i)
+                q2 = (int(yi) + 2, i)
+                intansity = (q2[0] - yi) * BW[q1[0], q1[1]] + (yi - q1[0]) * BW[q2[0], q2[1]]
+                edge = False
+                if intansity >= 128.:
+                    edge = True
+                if edge:
+                    skip = 0
+                    if not start:
+                        start_point = (get_correspond_int(yi), i)
+                else:
+                    skip += 1
+                    if start:
+                        if skip > 30:
+                            start = False
+                            end_point = get_correspond_int((k * (i - 1) + b), i - 1)
+                            lines.append((start_point, end_point))
+
+    return lines
+
 def mylineextraction(BW):
     '''
         Extracts the longest line segment from the given binary image.
@@ -228,7 +311,8 @@ def mylineextraction(BW):
     for item in filtered_peaks:
         print('Hits: %d, theta: %f, distance: %f' % (item[0], item[1], item[2]))
 
-    lines = search_for_lines(BW, filtered_peaks)
+    # lines = search_for_lines(BW, filtered_peaks)
+    lines = search_for_lines_interpolation(BW, filtered_peaks)
 
     max_sp = ()
     max_ep = ()
@@ -670,7 +754,7 @@ def Task5():
     I3 = cv2.imread(ROOT + 'image3.png', cv2.IMREAD_UNCHANGED)
 
     n = findBestMatching(I, I1, I2, I3)
-    print('The image matches QR-code.jpg best is image %d.jpg' % n)
+    print('The image matches QR-code.png best is image %d.png' % n)
 
 def main():
     FILENAME = 'fig.tif'
@@ -688,11 +772,10 @@ def main():
     
     f = Task3(Im)
     print('The corresponding binary edge image is computed and displayed successfully.')
-    
-    # f = cv2.imread('03binary2.jpg', cv2.IMREAD_UNCHANGED)
+
     Task4(f, FILENAME)
 
-    Task5()
+    # Task5()
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
