@@ -44,3 +44,34 @@
 %   mean, diff, classify, classregtree, eval, mahal.
 function [output_class, w, s_w, mean_c1, mean_c2] = myfld(input_sample, class1_samples, class2_samples)
 
+[n1, n] = size(class1_samples);
+[n2, n] = size(class2_samples);
+
+mean_c1 = sum(class1_samples)' / n1
+mean_c2 = sum(class2_samples)' / n2
+
+S1 = 0;
+for i = 1:n1
+    qi = class1_samples(i, :);
+    S1 = S1 + (qi - mean_c1)' * (qi - mean_c1);
+end
+S1
+
+S2 = 0;
+for i = 1:n2
+    qi = class2_samples(i, :);
+    S2 = S2 + (qi - mean_c2)' * (qi - mean_c2);
+end
+S2
+
+s_w = S1 + S2
+s_b = (mean_c2 - mean_c1) * (mean_c2 - mean_c1)'
+
+w = inv(s_w) * (mean_c2 - mean_c1)
+seperation_point = 0.5 * w' * (mean_c1 + mean_c2)
+value = input_sample * w
+if value < seperation_point
+    output_class = 1
+else
+    output_class = 2
+end
