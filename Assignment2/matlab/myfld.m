@@ -47,8 +47,8 @@ function [output_class, w, s_w, mean_c1, mean_c2] = myfld(input_sample, class1_s
 [n1, n] = size(class1_samples);
 [n2, n] = size(class2_samples);
 
-mean_c1 = sum(class1_samples)' / n1
-mean_c2 = sum(class2_samples)' / n2
+mean_c1 = sum(class1_samples) / n1
+mean_c2 = sum(class2_samples) / n2
 
 S1 = 0;
 for i = 1:n1
@@ -65,10 +65,10 @@ end
 S2
 
 s_w = S1 + S2
-s_b = (mean_c2 - mean_c1) * (mean_c2 - mean_c1)'
+s_b = (mean_c2 - mean_c1)' * (mean_c2 - mean_c1)
 
-w = inv(s_w) * (mean_c2 - mean_c1)
-seperation_point = 0.5 * w' * (mean_c1 + mean_c2)
+w = inv(s_w) * (mean_c2 - mean_c1)'
+seperation_point = 0.5 * w' * (mean_c1 + mean_c2)'
 value = input_sample * w
 if value < seperation_point
     output_class = 1

@@ -31,16 +31,26 @@ end
 
 %Voting
 [h, w] = size(Imbinary);
-Accumulator = zeros([h, w, 1]);
-for i0 = 1:h
-    for j0 = 1:w
-	    if Imbinary(i0, j0) == 1
-		    for i1 = 1:h
-			    for j1 = 1:w
-				    if abs((i1-i0)*(i1-i0)+(j1-j0)*(j1-j0) - r*r) < 60
-					    Accumulator(i1, j1, 1) = Accumulator(i1, j1, 1) + 1;
+Accumulator = zeros([h, w]);
+for y0 = 1:h
+    for x0 = 1:w
+        if Imbinary(y0, x0) == 1
+            boundaries = [];
+            for angle = 0:pi/180:2*pi
+                y = floor(y0 + r * sin(angle));
+                x = floor(x0 + r * cos(angle));
+                if (0 < y) && (y <= h)
+                    if (0 < x) && (x <= w)
+                        boundaries = [boundaries; [y, x]];
                     end
                 end
+            end
+            boundaries = unique(boundaries, 'rows');
+            [n, m] = size(boundaries);
+            for i = 1:n
+                y1 = boundaries(i, 1);
+                x1 = boundaries(i, 2);
+                Accumulator(y1, x1) = Accumulator(y1, x1) + 1;
             end
         end
     end
@@ -48,28 +58,25 @@ end
 
 
 % Finding local maxima in Accumulator
-max_value = Accumulator(1, 1, 1);
+max_value = Accumulator(1, 1);
 max_x = 1;
 max_y = 1;
 x0detect = [];
 y0detect = [];
 for i = 1:h
     for j = 1:w
-	    if Accumulator(i, j, 1) >= thresh
-		    y0detect = [y0detect i];
-			x0detect = [x0detect j];
+        if Accumulator(i, j) >= thresh
+            y0detect = [y0detect i];
+            x0detect = [x0detect j];
         end
-        if Accumulator(i, j, 1) > max_value
+        if Accumulator(i, j) > max_value
             max_y = i;
             max_x = j;
-            max_value = Accumulator(i, j, 1);
+            max_value = Accumulator(i, j);
         end
     end
 end
-max(Accumulator(:))
 if length(x0detect) == 0
     y0detect = [y0detect max_y];
-	x0detect = [x0detect max_x];
+    x0detect = [x0detect max_x];
 end
-% y0detect = [max_y];
-% x0detect = [max_x];

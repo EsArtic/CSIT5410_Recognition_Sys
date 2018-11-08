@@ -18,7 +18,7 @@ figure; imshow(I);
 E=edge(I,'canny');
 figure;imshow(E,[]);
 radius = 114;
-thres = 110;
+thres = 85;
 [y0detect,x0detect,Accumulator] = myhoughcircle(E,radius,thres);
 
 [V,co] = max(max(Accumulator(:,:)));

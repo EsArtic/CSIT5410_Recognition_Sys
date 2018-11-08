@@ -9,5 +9,3 @@ for x=1:1:size(canvas, 1)
     end
 end
 end
-
-
