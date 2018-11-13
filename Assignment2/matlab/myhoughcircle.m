@@ -76,6 +76,8 @@ for i = 1:h
         end
     end
 end
+
+% If no point was found, return the maximal one
 if length(x0detect) == 0
     y0detect = [y0detect max_y];
     x0detect = [x0detect max_x];

@@ -47,31 +47,52 @@ function [output_class, w, s_w, mean_c1, mean_c2] = myfld(input_sample, class1_s
 [n1, n] = size(class1_samples);
 [n2, n] = size(class2_samples);
 
-mean_c1 = sum(class1_samples) / n1
-mean_c2 = sum(class2_samples) / n2
+mean_c1 = sum(class1_samples) / n1;
+fprintf('Mean of class 1:\n')
+disp(mean_c1)
 
-S1 = 0;
+mean_c2 = sum(class2_samples) / n2;
+fprintf('Mean of class 2:\n')
+disp(mean_c2)
+
+s1 = 0;
 for i = 1:n1
     qi = class1_samples(i, :);
-    S1 = S1 + (qi - mean_c1)' * (qi - mean_c1);
+    s1 = s1 + (qi - mean_c1)' * (qi - mean_c1);
 end
-S1
+fprintf('Within class variance of class 1:\n')
+disp(s1)
 
-S2 = 0;
+s2 = 0;
 for i = 1:n2
     qi = class2_samples(i, :);
-    S2 = S2 + (qi - mean_c2)' * (qi - mean_c2);
+    s2 = s2 + (qi - mean_c2)' * (qi - mean_c2);
 end
-S2
+fprintf('Within class variance of class 2:\n')
+disp(s2)
 
-s_w = S1 + S2
-s_b = (mean_c2 - mean_c1)' * (mean_c2 - mean_c1)
+s_w = s1 + s2;
+fprintf('Total within class variance:\n')
+disp(s_w)
 
-w = inv(s_w) * (mean_c2 - mean_c1)'
-seperation_point = 0.5 * w' * (mean_c1 + mean_c2)'
-value = input_sample * w
+s_b = (mean_c2 - mean_c1)' * (mean_c2 - mean_c1);
+fprintf('Between class variance:\n')
+disp(s_b)
+
+w = inv(s_w) * (mean_c2 - mean_c1)';
+fprintf('Weight:\n')
+disp(w)
+
+seperation_point = 0.5 * w' * (mean_c1 + mean_c2)';
+fprintf('Seperation point:\n')
+disp(seperation_point)
+
+value = input_sample * w;
+fprintf('The product of weight and input sample:\n')
+disp(value)
+
 if value < seperation_point
-    output_class = 1
+    output_class = 1;
 else
-    output_class = 2
+    output_class = 2;
 end
